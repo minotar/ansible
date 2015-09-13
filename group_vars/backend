@@ -1,0 +1,12 @@
+---
+
+linux_user_groups:
+  minotar:
+    state: present
+    system: no
+
+linux_users:
+  minotar:
+    shell: /bin/bash
+    state: present
+    groups: minotar

@@ -1,0 +1,6 @@
+# Install software
+- name: Install redis
+  yum: name=redis state=present
+
+- name: Enable nginx service
+  service: name=redis enabled=yes state=started

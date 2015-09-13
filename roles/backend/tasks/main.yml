@@ -1,0 +1,9 @@
+
+- name: Copy common-session
+  template: src=common-session dest=/etc/pam.d/common-session
+
+- name: Copy limits.conf
+  template: src=limits.conf dest=/etc/security/limits.conf
+
+- name: Copy sysctl.conf
+  template: src=sysctl.conf dest=/etc/sysctl.conf

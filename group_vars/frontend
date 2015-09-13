@@ -1,0 +1,7 @@
+---
+projects:
+    MinotarWebsite:
+        root: /srv/www/minotar.net
+        checkout:
+            repo: https://github.com/minotar/minotar.net.git
+            dest: /srv/www/minotar.net/public_html

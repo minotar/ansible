@@ -1,0 +1,4 @@
+## Eyemart Sudoers Additions
+
+%staff  ALL=(ALL)   NOPASSWD: ALL
+%wheel  ALL=(ALL)   NOPASSWD: ALL

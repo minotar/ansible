@@ -1,0 +1,5 @@
+
+- name: Add groups from group_vars file
+  action: group name={{ item.key }} state={{ item.value.state }} system={{ item.value.system }}
+  with_dict: linux_user_groups
+  sudo: yes

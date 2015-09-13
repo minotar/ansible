@@ -1,0 +1,11 @@
+---
+- name: Checkout git repos
+  git: repo={{ item.value.checkout.repo }} dest={{ item.value.checkout.dest }} accept_hostkey=yes
+  with_dict: projects
+  when: item.value.checkout is defined
+
+- name: Fix permissions on directory
+  file: path={{ item.value.root }} state=directory group=nginx owner=nginx recurse=yes
+  with_dict: projects
+  notify:
+    - restart nginx

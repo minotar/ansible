@@ -1,0 +1,33 @@
+
+- name: setup imgd servers
+  hosts: minotar-backend
+  sudo: yes
+  vars_files:
+    - group_vars/common
+    - group_vars/backend
+
+  roles:
+    - common
+    - backend
+
+- name: setup varnish servers
+  hosts: minotar-frontend
+  sudo: yes
+  vars_files:
+    - group_vars/common
+    - group_vars/frontend
+
+  roles:
+    - common
+    - frontend
+
+- name: setup redis servers
+  hosts: minotar-cache
+  sudo: yes
+  vars_files:
+    - group_vars/common
+    - group_vars/cache
+
+  roles:
+    - common
+    - cache

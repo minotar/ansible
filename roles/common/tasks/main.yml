@@ -1,0 +1,16 @@
+
+- name: selinux python lib
+  yum: name=libselinux-python state=present
+  sudo: yes
+
+# Install software
+- name: Install software
+  yum: name=git,vim,wget state=present
+  sudo: yes
+
+- include: groups.yml
+- include: users.yml
+
+- name: Install staff sudoers
+  template: src=30-dev dest=/etc/sudoers.d/30-dev
+  sudo: yes
