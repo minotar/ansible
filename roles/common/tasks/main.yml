@@ -1,11 +1,6 @@
-
-- name: selinux python lib
-  yum: name=libselinux-python state=present
-  sudo: yes
-
 # Install software
 - name: Install software
-  yum: name=git,vim,wget state=present
+  apt: name=git,vim,wget state=present
   sudo: yes
 
 - include: groups.yml
