@@ -1,0 +1,10 @@
+
+- name: setup imgd servers
+  hosts: minotar-backend
+  sudo: yes
+  vars_files:
+    - group_vars/common
+    - group_vars/backend
+
+  roles:
+    - common

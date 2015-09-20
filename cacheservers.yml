@@ -1,0 +1,10 @@
+
+- name: setup redis servers
+  hosts: minotar-cache
+  sudo: yes
+  vars_files:
+    - group_vars/common
+    - group_vars/cache
+
+  roles:
+    - common
