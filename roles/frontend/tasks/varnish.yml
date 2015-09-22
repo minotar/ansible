@@ -1,0 +1,38 @@
+- name: Add Varnish apt key.
+  apt_key:
+    data: "{{ lookup('file', 'varnish.gpg') }}"
+    state: present
+
+- name: Add Varnish apt repository.
+  apt_repository:
+    repo: "deb https://repo.varnish-cache.org/ubuntu {{ ansible_distribution_release }} varnish-4.0"
+    state: present
+
+- name: Install Varnish
+  apt:
+    name: varnish
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+
+- name: Enable Varnish at boot
+  service:
+    name: varnish
+    enabled: yes
+    state: stopped
+
+- name: Write Varnish configuration
+  template:
+    src: vcl.j2
+    dest: {{ varnish_vcl }}
+    owner: root
+    group: root
+    mode: 0644
+  template:
+    src: varnish.j2
+    dest: /etc/default/varnish
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart varnish

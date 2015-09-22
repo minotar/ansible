@@ -1,11 +1,18 @@
 # Install software
 - name: Install software
-  apt: name=git,vim,wget state=present
+  apt:
+    name: git,vim,wget,curl,python-pycurl
+    state: present
   sudo: yes
 
 - include: groups.yml
 - include: users.yml
 
 - name: Install staff sudoers
-  template: src=30-dev dest=/etc/sudoers.d/30-dev
+  template:
+    src: 30-dev
+    dest: /etc/sudoers.d/30-dev
+    owner: root
+    group: root
+    mode: 0644
   sudo: yes

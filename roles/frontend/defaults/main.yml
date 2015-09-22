@@ -1,0 +1,12 @@
+---
+
+varnish_bind: 0.0.0.0
+varnish_port: 80
+varnishadm_bind: 127.0.0.1
+varnishadm_port: 6082
+
+varnish_storage_type: "malloc"
+varnish_storage_size: "2G"
+
+varnish_vcl: "/etc/varnish/minotar.vcl"
+

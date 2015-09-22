@@ -1,2 +1,17 @@
 - name: restart nginx
-  service: name=nginx state=restarted
+  service:
+    name: nginx
+    state: restarted
+- name: reload nginx
+  service:
+    name: nginx
+    state: reloaded
+
+- name: restart varnish
+  service:
+    name: varnish
+    state: restarted
+- name: reload varnish
+  service:
+    name: varnish
+    state: reloaded

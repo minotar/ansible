@@ -1,10 +1,19 @@
 
 - name: Add users from group_vars file
-  action: user name={{ item.key }} shell={{ item.value.shell }} state={{ item.value.state }} createhome=yes append=yes groups={{ item.value.groups }}
+  action:
+    user name: {{ item.key }}
+    shell: {{ item.value.shell }}
+    state: {{ item.value.state }}
+    createhome: yes
+    append: yes
+    groups: {{ item.value.groups }}
   with_dict: linux_users
   sudo: yes
 
 - name: Add SSH keys from group_vars file
-  action: authorized_key key="{{ item.value.contents }}" user={{ item.key }} state=present
+  action: authorized_key
+    key: {{ item.value.contents }}
+    user: {{ item.key }}
+    state: present
   with_dict: authorized_ssh_keys
   sudo: yes

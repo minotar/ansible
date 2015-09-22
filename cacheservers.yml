@@ -1,5 +1,5 @@
 
-- name: setup redis servers
+- name: Setup Minotar Cache
   hosts: minotar-cache
   sudo: yes
   vars_files:
@@ -8,3 +8,4 @@
 
   roles:
     - common
+    - cache

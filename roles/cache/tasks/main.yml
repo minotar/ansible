@@ -1,6 +1,22 @@
-# Install software
 - name: Install redis
-  yum: name=redis state=present
+  apt:
+    name: redis-server
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
 
-- name: Enable nginx service
-  service: name=redis enabled=yes state=started
+- name: Enable redis-server at boot
+  service:
+    name: redis-server
+    enabled: yes
+    state: stopped
+
+- name: Write redis configuration
+  template:
+    src: redis.j2
+    dest: /etc/redis/redis.conf
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart redis
