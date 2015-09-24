@@ -8,5 +8,9 @@ varnishadm_port: 6082
 varnish_storage_type: "malloc"
 varnish_storage_size: "2G"
 
-varnish_vcl: "/etc/varnish/minotar.vcl"
+varnish_vcl: /etc/varnish/minotar.vcl
 
+varnish_backends:
+  - name: default
+    address: 127.0.0.1
+    port: 80

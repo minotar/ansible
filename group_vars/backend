@@ -10,3 +10,4 @@ linux_users:
     shell: /bin/bash
     state: present
     groups: minotar
+    home: /srv/minotar/

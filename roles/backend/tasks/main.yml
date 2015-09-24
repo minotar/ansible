@@ -1,9 +1,54 @@
 
 - name: Copy common-session
-  template: src=common-session dest=/etc/pam.d/common-session
+  template:
+    src: common-session
+    dest: /etc/pam.d/common-session
+    owner: root
+    group: root
+    mode: 0644
 
 - name: Copy limits.conf
-  template: src=limits.conf dest=/etc/security/limits.conf
+  template:
+    src: limits.conf
+    dest: /etc/security/limits.conf
+    owner: root
+    group: root
+    mode: 0644
 
 - name: Copy sysctl.conf
-  template: src=sysctl.conf dest=/etc/sysctl.conf
+  template:
+    src: sysctl.conf
+    dest: /etc/sysctl.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Copy imgd.conf
+  template:
+    src: imgd.conf
+    dest: /etc/init/imgd.conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Deploy imgd binary
+  copy:
+    src: imgd
+    dest: /srv/minotar/imgd
+    owner: root
+    group: minotar
+    mode: 0750
+
+- name: Copy imgd.conf
+  template:
+    src: config.gcfg
+    dest: /srv/minotar/config.gcfg
+    owner: root
+    group: minotar
+    mode: 0750
+
+- name: Start and enable imgd
+  service:
+    name: imgd
+    enabled: yes
+    state: started

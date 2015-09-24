@@ -59,7 +59,7 @@ VARNISH_STORAGE_SIZE={{ varnish_storage_size }}
 VARNISH_SECRET_FILE=/etc/varnish/secret
 
 # Backend storage specification
-#VARNISH_STORAGE="${VARNISH_STORAGE_TYPE},${VARNISH_STORAGE_SIZE}"
+VARNISH_STORAGE="${VARNISH_STORAGE_TYPE},${VARNISH_STORAGE_SIZE}"
 
 # Default TTL used when the backend does not specify one
 #VARNISH_TTL=120
@@ -69,9 +69,11 @@ VARNISH_SECRET_FILE=/etc/varnish/secret
 DAEMON_OPTS="-a ${VARNISH_LISTEN_ADDRESS}:${VARNISH_LISTEN_PORT} \
             -f ${VARNISH_VCL_CONF} \
             -T ${VARNISH_ADMIN_LISTEN_ADDRESS}:${VARNISH_ADMIN_LISTEN_PORT} \
+            -S ${VARNISH_SECRET_FILE} \
+            -s ${VARNISH_STORAGE}"
+
+
 #            -t ${VARNISH_TTL} \
 #            -p thread_pool_min=${VARNISH_MIN_THREADS} \
 #            -p thread_pool_max=${VARNISH_MAX_THREADS} \
 #            -p thread_pool_timeout=${VARNISH_THREAD_TIMEOUT} \
-            -S ${VARNISH_SECRET_FILE} \
-            -s ${VARNISH_STORAGE}"

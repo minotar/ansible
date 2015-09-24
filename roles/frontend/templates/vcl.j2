@@ -6,29 +6,40 @@ vcl 4.0;
 import std;
 import directors;
 
-backend server1 { # Define one backend
-  .host = "127.0.0.1";    # IP or Hostname of backend
-  .port = "8000";           # Port Apache or whatever is listening
-  .max_connections = 300; # That's it
+backend minotarWebsite {
+  .host = "127.0.0.1";
+  .port = "8080";
+  .host_header = "minotar.net"
+  .max_connections = 768;
 
   .probe = {
-    #.url = "/"; # short easy way (GET /)
-    # We prefer to only do a HEAD /
-    .request =
-      "HEAD /version HTTP/1.1"
-      "Host: localhost"
-      "Connection: close";
+    .url = "/";
 
-    .interval  = 5s; # check the health of each backend every 5 seconds
-    .timeout   = 1s; # timing out after 1 second.
-    .window    = 5;  # If 3 out of the last 5 polls succeeded the backend is considered healthy, otherwise it will be marked as sick
+    .interval = 5s;
+    .timeout = 1s;
+    .window = 5;
+    .threshold = 5;
+}
+
+# Should possibly consider adding a backend health check page (vs. /version) that ensures things are okay with Redis?
+{% for backend in item.backends %}
+backend {{ backend.name }} {
+  .host = "{{ backend.address }}";
+  .port = "{{ backend.port }}";
+
+  .connect_timeout = 4s;
+  .first_byte_timeout = 10s;
+  .between_bytes_timeout = 2s;
+
+  .probe = {
+    .url = "/version";
+    .interval = 5s;
+    .timeout = 2s;
+    .window = 5;
     .threshold = 3;
   }
-
-  .first_byte_timeout     = 300s;   # How long to wait before we receive a first byte from our backend?
-  .connect_timeout        = 5s;     # How long to wait for a backend connection?
-  .between_bytes_timeout  = 2s;     # How long to wait between bytes received from our backend?
 }
+{% endfor %}
 
 acl purge {
   # ACL we'll use later to allow purges
@@ -51,9 +62,9 @@ sub vcl_init {
   # Typically used to initialize VMODs.
 
   new vdir = directors.round_robin();
-  vdir.add_backend(server1);
-  # vdir.add_backend(server...);
-  # vdir.add_backend(servern);
+  {% for backend in item.backends %}
+  vdir.add_backend({{ backend.name }});
+  {% endfor %}
 }
 
 sub vcl_recv {
@@ -64,13 +75,15 @@ sub vcl_recv {
 
   set req.backend_hint = vdir.backend(); # send all traffic to the vdir director
 
-#  if (req.restarts == 0) {
-#    if (req.http.X-Forwarded-For) { # set or append the client.ip to X-Forwarded-For header
-#      set req.http.X-Forwarded-For = req.http.X-Forwarded-For + ", " + client.ip;
-#    } else {
-#      set req.http.X-Forwarded-For = client.ip;
-#    }
-#  }
+  # Only handle traffic for minotar.net and redirect all other to.
+  if (req.http.host != "minotar.net") {
+    # Handle HTTP/S by looking for the X-Forwarded-Proto header.
+    if (req.http.x-forwarded-proto == "https") {
+        return (synth(xyz, "https://minotar.net/"));
+    } else {
+        return (synth(xyz, "http://minotar.net/"));
+    }
+  }
 
   # Let's remove all query strings, ampersands and hashes
   if (req.url ~ "\?|&|#") {
@@ -90,30 +103,21 @@ sub vcl_recv {
     return (purge);
   }
 
-  # Only deal with "normal" types
+  # Only deal with GET and HEAD, setting it to GET if we get something funny
   if (req.method != "GET" &&
       req.method != "HEAD") {
     set req.method = "GET";
   }
 
-  # Normalize Accept-Encoding header
-  # straight from the manual: https://www.varnish-cache.org/docs/3.0/tutorial/vary.html
-  # TODO: Test if it's still needed, Varnish 4 now does this by itself if http_gzip_support = on
-  # https://www.varnish-cache.org/docs/trunk/users-guide/compression.html
-  # https://www.varnish-cache.org/docs/trunk/phk/gzip.html
-#  if (req.http.Accept-Encoding) {
-#    if (req.url ~ "\.(jpg|png|gif|gz|tgz|bz2|tbz|mp3|ogg)$") {
-#      # No point in compressing these
-#      unset req.http.Accept-Encoding;
-#    } elsif (req.http.Accept-Encoding ~ "gzip") {
-#      set req.http.Accept-Encoding = "gzip";
-#    } elsif (req.http.Accept-Encoding ~ "deflate") {
-#      set req.http.Accept-Encoding = "deflate";
-#    } else {
-#      # unkown algorithm
-#      unset req.http.Accept-Encoding;
-#    }
-#  }
+  # We want to make each stats page available and set lower TTLs
+  if (req.url ~ "^/stats/") {
+    {% for backend in item.backends %}
+    if (req.url == "/stats/{{ backend.name }}") {
+      set req.backend_hint = {{ backend.name }};
+      set req.url = "/stats";
+    }
+    {% endfor %}
+  }
 
   if (req.http.Cache-Control ~ "(?i)no-cache") {
   #if (req.http.Cache-Control ~ "(?i)no-cache" && client.ip ~ editors) { # create the acl editors if you want to restrict the Ctrl-F5
@@ -163,8 +167,10 @@ sub vcl_hash {
 
     hash_data(req.url);
     if (req.http.host) {
+        # Should always hash with "minotar.net"
         hash_data(req.http.host);
     } else {
+        # Should not be used
         hash_data(server.ip);
     }
     return (lookup);

@@ -1,8 +1,8 @@
 ---
 - name: Checkout git repos
   git:
-    repo: {{ item.value.checkout.repo }}
-    dest: {{ item.value.checkout.dest }}
+    repo: "{{ item.value.checkout.repo }}"
+    dest: "{{ item.value.checkout.dest }}"
     accept_hostkey: yes
   with_dict: projects
   when: item.value.checkout is defined
@@ -11,8 +11,8 @@
   file:
     path: "{{ item.value.root }}/logs"
     state: directory
-    group: nginx
-    owner: nginx
+    group: www-data
+    owner: www-data
     mode: 0770
     recurse: yes
   with_dict: projects

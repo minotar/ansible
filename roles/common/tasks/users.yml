@@ -1,19 +1,20 @@
 
 - name: Add users from group_vars file
-  action:
-    user name: {{ item.key }}
-    shell: {{ item.value.shell }}
-    state: {{ item.value.state }}
+  user:
+    name: "{{ item.key }}"
+    shell: "{{ item.value.shell }}"
+    state: "{{ item.value.state }}"
     createhome: yes
+    home: "{{ item.value.home | default(\"/home/\" + item.key + \"/\") }}"
     append: yes
-    groups: {{ item.value.groups }}
+    groups: "{{ item.value.groups }}"
   with_dict: linux_users
   sudo: yes
 
 - name: Add SSH keys from group_vars file
-  action: authorized_key
-    key: {{ item.value.contents }}
-    user: {{ item.key }}
+  authorized_key:
+    key: "{{ item.value.contents }}"
+    user: "{{ item.key }}"
     state: present
   with_dict: authorized_ssh_keys
   sudo: yes
