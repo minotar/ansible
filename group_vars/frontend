@@ -1,7 +1,19 @@
 ---
+
+nginx_server_name: minotar.net
+nginx_server_nameredirect: www.minotar.net
+nginx_server_port: 8080
+nginx_server_root: /srv/www/minotar.net/public_html
+nginx_server_accesslog: /srv/www/minotar.net/logs/access.log
+nginx_server_errorlog: /srv/www/minotar.net/logs/error.log
+
 projects:
     MinotarWebsite:
         root: /srv/www/minotar.net
         checkout:
             repo: https://github.com/minotar/minotar.net.git
             dest: /srv/www/minotar.net/public_html
+
+
+varnish_storage_type: "malloc"
+varnish_storage_size: "3G"

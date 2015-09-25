@@ -1,11 +1,38 @@
 ---
 
+## Nginx ##
+
+nginx_nopush: "on"
+nginx_nodelay: "on"
+
+nginx_keepalive_timeout: 60
+nginx_client_header_timeout: 60
+nginx_send_timeout: 60
+nginx_reset_timedout_connection: "on"
+
+nginx_types_hash_max_size: 2048
+nginx_client_header_buffer_size: 1k
+nginx_large_client_header_buffers: 4 8k
+
+nginx_gzip: True
+
+nginx_server_name: localhost
+nginx_server_nameredirect: 127.0.0.1
+nginx_server_port: 8080
+nginx_server_root: /srv/www/localhost/public_html
+nginx_server_accesslog: /srv/www/localhost/logs/access.log
+nginx_server_errorlog: /srv/www/localhost/logs/error.log
+
+
+## Varnish ##
+
 varnish_bind: 0.0.0.0
 varnish_port: 80
 varnishadm_bind: 127.0.0.1
 varnishadm_port: 6082
 
 varnish_storage_type: "malloc"
+varnish_storage_type: "file,/var/lib/varnish/$INSTANCE/varnish_storage.bin"
 varnish_storage_size: "2G"
 
 varnish_vcl: /etc/varnish/minotar.vcl
@@ -13,4 +40,4 @@ varnish_vcl: /etc/varnish/minotar.vcl
 varnish_backends:
   - name: default
     address: 127.0.0.1
-    port: 80
+    port: 8000

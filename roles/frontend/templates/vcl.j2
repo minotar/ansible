@@ -6,10 +6,10 @@ vcl 4.0;
 import std;
 import directors;
 
-backend minotarWebsite {
+backend frontendWebsite {
   .host = "127.0.0.1";
-  .port = "8080";
-  .host_header = "minotar.net"
+  .port = "{{ nginx_server_port }}";
+  .host_header = "{{ nginx_server_name }}";
   .max_connections = 768;
 
   .probe = {
@@ -19,10 +19,11 @@ backend minotarWebsite {
     .timeout = 1s;
     .window = 5;
     .threshold = 5;
+  }
 }
 
 # Should possibly consider adding a backend health check page (vs. /version) that ensures things are okay with Redis?
-{% for backend in item.backends %}
+{% for backend in varnish_backends %}
 backend {{ backend.name }} {
   .host = "{{ backend.address }}";
   .port = "{{ backend.port }}";
@@ -32,6 +33,7 @@ backend {{ backend.name }} {
   .between_bytes_timeout = 2s;
 
   .probe = {
+    #.url = "/check";
     .url = "/version";
     .interval = 5s;
     .timeout = 2s;
@@ -48,21 +50,12 @@ acl purge {
   "::1";
 }
 
-/*
-acl editors {
-  # ACL to honor the "Cache-Control: no-cache" header to force a refresh but only from selected IPs
-  "localhost";
-  "127.0.0.1";
-  "::1";
-}
-*/
-
 sub vcl_init {
   # Called when VCL is loaded, before any requests pass through it.
   # Typically used to initialize VMODs.
 
   new vdir = directors.round_robin();
-  {% for backend in item.backends %}
+  {% for backend in varnish_backends %}
   vdir.add_backend({{ backend.name }});
   {% endfor %}
 }
@@ -75,19 +68,25 @@ sub vcl_recv {
 
   set req.backend_hint = vdir.backend(); # send all traffic to the vdir director
 
-  # Only handle traffic for minotar.net and redirect all other to.
-  if (req.http.host != "minotar.net") {
-    # Handle HTTP/S by looking for the X-Forwarded-Proto header.
-    if (req.http.x-forwarded-proto == "https") {
-        return (synth(xyz, "https://minotar.net/"));
-    } else {
-        return (synth(xyz, "http://minotar.net/"));
-    }
+  # If not for www.minotar.net && minotar.net then we can drop it.
+  if (req.http.host != "{{ nginx_server_name }}" && req.http.host != "{{ nginx_server_nameredirect }}") {
+    return (synth(403, "Forbidden"));
   }
 
   # Let's remove all query strings, ampersands and hashes
   if (req.url ~ "\?|&|#") {
-    set req.url = regsub(req.url, "(\?|&).*$", "");
+    # pretty sure there should be a |# here...
+    set req.url = regsub(req.url, "(\?|&|\#).*$", "");
+  }
+
+  # Redirect www to no-www and keep the URI
+  if (req.http.host == "{{ nginx_server_nameredirect }}") {
+    # Handle HTTP/S by looking for the X-Forwarded-Proto header.
+    if (req.http.x-forwarded-proto == "https") {
+        return (synth(720, "https://{{ nginx_server_name }}" + req.url));
+    } else {
+        return (synth(720, "http://{{ nginx_server_name }}" + req.url));
+    }
   }
 
   # Remove all cookies
@@ -110,24 +109,14 @@ sub vcl_recv {
   }
 
   # We want to make each stats page available and set lower TTLs
+  # This won't work "as is" becasue the hash is computed from the req.url which will be the same for all requests here...
   if (req.url ~ "^/stats/") {
-    {% for backend in item.backends %}
-    if (req.url == "/stats/{{ backend.name }}") {
-      set req.backend_hint = {{ backend.name }};
-      set req.url = "/stats";
-    }
-    {% endfor %}
+    call backend_stats;
   }
 
-  if (req.http.Cache-Control ~ "(?i)no-cache") {
-  #if (req.http.Cache-Control ~ "(?i)no-cache" && client.ip ~ editors) { # create the acl editors if you want to restrict the Ctrl-F5
-  # http://varnish.projects.linpro.no/wiki/VCLExampleEnableForceRefresh
-  # Ignore requests via proxy caches and badly behaved crawlers
-  # like msnbot that send no-cache with every request.
-    if (! (req.http.Via || req.http.User-Agent ~ "(?i)bot" || req.http.X-Purge)) {
-      #set req.hash_always_miss = true; # Doesn't seems to refresh the object in the cache
-      return(purge); # Couple this with restart in vcl_purge and X-Purge header to avoid loops
-    }
+  # Well this is digusting...
+  if (req.url == "/" || req.url == "/favicon.ico" || req.url == "/robots.txt" || req.url == "/404.html" || req.url ~ "^/assets/" || req.url ~ "^/addons/") {
+    set req.backend_hint = frontendWebsite;
   }
 
   return (hash);
@@ -167,7 +156,7 @@ sub vcl_hash {
 
     hash_data(req.url);
     if (req.http.host) {
-        # Should always hash with "minotar.net"
+        # Should always hash with just the main site as we redirect/error on everything else.
         hash_data(req.http.host);
     } else {
         # Should not be used
@@ -259,6 +248,8 @@ sub vcl_deliver {
     set resp.http.X-Cache = "MISS";
   }
 
+  #set resp.http.X-Backend = beresp.backend.name;
+
   if (req.http.grace) {
     set resp.http.X-Grace = req.http.grace;
   }
@@ -291,7 +282,41 @@ sub vcl_purge {
   }
 }
 
+sub vcl_synth {
+  if (resp.status == 720) {
+    # We use this special error status 720 to force redirects with 301 (permanent) redirects
+    # To use this, call the following from anywhere in vcl_recv: return (synth(720, "http://host/new.html"));
+    set resp.http.Location = resp.reason;
+    set resp.status = 301;
+  } elseif (resp.status == 721) {
+    # And we use error status 721 to force redirects with a 302 (temporary) redirect
+    # To use this, call the following from anywhere in vcl_recv: return (synth(720, "http://host/new.html"));
+    set resp.http.Location = resp.reason;
+    set resp.status = 302;
+  }
 
+
+  unset resp.http.Server;
+  unset resp.http.X-Drupal-Cache;
+  unset resp.http.X-Varnish;
+
+  return (deliver);
+}
+
+sub backend_stats {
+    if (req.url == "/stats/nginx") {
+      set req.backend_hint = frontendWebsite;
+      set req.url = "/stats?nginx";
+    }
+    {% for backend in varnish_backends %}
+    if (req.url == "/stats/{{ backend.name }}") {
+      set req.backend_hint = {{ backend.name }};
+      set req.url = "/stats?{{ backend.name }}";
+    }
+    {% endfor %}
+
+  return (hash);
+}
 
 sub vcl_fini {
   # Called when VCL is discarded only after all requests have exited the VCL.
