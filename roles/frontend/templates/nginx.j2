@@ -4,7 +4,7 @@
 #   * Official English Documentation: http://nginx.org/en/docs/
 #   * Official Russian Documentation: http://nginx.org/ru/docs/
 
-user www-data;
+user {{ nginx_user }};
 worker_processes auto;
 error_log /var/log/nginx/error.log;
 pid /run/nginx.pid;
@@ -45,7 +45,7 @@ http {
     include             /etc/nginx/mime.types;
     default_type        application/octet-stream;
 
-{% if nginx_gzip -%}
+{% if nginx_gzip %}
  
     ##
     # Gzip Settings
@@ -93,7 +93,7 @@ http {
         text/plain
         text/x-component;
 
-{% endif -%}
+{% endif %}
 
     # Idea being here that we don't need to cache many file descriptors, but we should cache them for a while
     open_file_cache          max=50 inactive=1h;

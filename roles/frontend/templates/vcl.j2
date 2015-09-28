@@ -68,12 +68,13 @@ sub vcl_recv {
 
   set req.backend_hint = vdir.backend(); # send all traffic to the vdir director
 
-  # If not for www.minotar.net && minotar.net then we can drop it.
+  # If not for the server_name && not the server_name redirect then we can drop it.
   if (req.http.host != "{{ nginx_server_name }}" && req.http.host != "{{ nginx_server_nameredirect }}") {
     return (synth(403, "Forbidden"));
   }
 
   # Let's remove all query strings, ampersands and hashes
+  # These should not appear in any requests and are unrequired.
   if (req.url ~ "\?|&|#") {
     # pretty sure there should be a |# here...
     set req.url = regsub(req.url, "(\?|&|\#).*$", "");
@@ -108,8 +109,7 @@ sub vcl_recv {
     set req.method = "GET";
   }
 
-  # We want to make each stats page available and set lower TTLs
-  # This won't work "as is" becasue the hash is computed from the req.url which will be the same for all requests here...
+  # We want to make each stats page available under a special name and set lower TTLs
   if (req.url ~ "^/stats/") {
     call backend_stats;
   }
@@ -187,7 +187,9 @@ sub vcl_hit {
   if (std.healthy(req.backend_hint)) {
     # Backend is healthy. Limit age to 10s.
     if (obj.ttl + 10s > 0s) {
+{% if varnish_extra_headers %}
       set req.http.grace = "normal(limited)";
+{% endif %}
       return (deliver);
     } else {
       # No candidate for grace. Fetch a fresh object.
@@ -196,7 +198,9 @@ sub vcl_hit {
   } else {
     # backend is sick - use full grace
       if (obj.ttl + obj.grace > 0s) {
+{% if varnish_extra_headers %}
       set req.http.grace = "full";
+{% endif %}
       return (deliver);
     } else {
       # no graced object.
@@ -223,10 +227,22 @@ sub vcl_backend_response {
   # Remove all cookies, cache everything
   unset beresp.http.Set-Cookie;
 
+{% if varnish_extra_headers %}
+  # Return backend name with each request
+  set beresp.http.X-Backend = beresp.backend.name;
+{% endif %}
+
+  # We may as well introduce some basic caching of the stats
+  if (bereq.url ~ "^/stats") {
+    set beresp.ttl = 10s;
+    return (deliver);
+  }
+
   # Set 2min cache if unset for static files
   if (beresp.ttl <= 0s || beresp.http.Vary == "*") {
     set beresp.ttl = 120s; # Important, you shouldn't rely on this, SET YOUR HEADERS in the backend
-    set beresp.uncacheable = true;
+    # The uncacheable header tells Varnish to keep a record that we should not cache this request and we should go to backend.
+    #set beresp.uncacheable = true;
     return (deliver);
   }
 
@@ -242,13 +258,12 @@ sub vcl_backend_response {
 sub vcl_deliver {
   # Called before a cached object is delivered to the client.
 
+{% if varnish_extra_headers %}
   if (obj.hits > 0) { # Add debug header to see if it's a HIT/MISS and the number of hits, disable when not needed
     set resp.http.X-Cache = "HIT";
   } else {
     set resp.http.X-Cache = "MISS";
   }
-
-  #set resp.http.X-Backend = beresp.backend.name;
 
   if (req.http.grace) {
     set resp.http.X-Grace = req.http.grace;
@@ -258,19 +273,9 @@ sub vcl_deliver {
   # and obj.hits may not be reset in some cases where bans are in use. See bug 1492 for details.
   # So take hits with a grain of salt
   set resp.http.X-Cache-Hits = obj.hits;
+{% endif %}
 
-  # Remove some headers: PHP version
-  unset resp.http.X-Powered-By;
-
-  # Remove some headers: Apache version & OS
-  unset resp.http.Server;
-  unset resp.http.X-Drupal-Cache;
-  unset resp.http.X-Varnish;
-  unset resp.http.Via;
-  unset resp.http.Link;
-  unset resp.http.X-Generator;
-
-  return (deliver);
+  call header_cleanup;
 }
 
 sub vcl_purge {
@@ -295,14 +300,10 @@ sub vcl_synth {
     set resp.status = 302;
   }
 
-
-  unset resp.http.Server;
-  unset resp.http.X-Drupal-Cache;
-  unset resp.http.X-Varnish;
-
-  return (deliver);
+  call header_cleanup;
 }
 
+# Setting custom req.url so the cache works
 sub backend_stats {
     if (req.url == "/stats/nginx") {
       set req.backend_hint = frontendWebsite;
@@ -316,6 +317,19 @@ sub backend_stats {
     {% endfor %}
 
   return (hash);
+}
+
+# Header cleanup and removal for headers which we don't want making it to the clients.
+sub header_cleanup {
+  unset resp.http.X-Powered-By;
+  unset resp.http.Server;
+  unset resp.http.X-Drupal-Cache;
+  unset resp.http.X-Varnish;
+  unset resp.http.Via;
+  unset resp.http.Link;
+  unset resp.http.X-Generator;
+
+  return (deliver);
 }
 
 sub vcl_fini {

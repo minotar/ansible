@@ -2,6 +2,8 @@
 
 ## Nginx ##
 
+nginx_user: "www-data"
+
 nginx_nopush: "on"
 nginx_nodelay: "on"
 
@@ -11,8 +13,8 @@ nginx_send_timeout: 60
 nginx_reset_timedout_connection: "on"
 
 nginx_types_hash_max_size: 2048
-nginx_client_header_buffer_size: 1k
-nginx_large_client_header_buffers: 4 8k
+nginx_client_header_buffer_size: "1k"
+nginx_large_client_header_buffers: "4 8k"
 
 nginx_gzip: True
 
@@ -31,7 +33,6 @@ varnish_port: 80
 varnishadm_bind: 127.0.0.1
 varnishadm_port: 6082
 
-varnish_storage_type: "malloc"
 varnish_storage_type: "file,/var/lib/varnish/$INSTANCE/varnish_storage.bin"
 varnish_storage_size: "2G"
 
@@ -41,3 +42,5 @@ varnish_backends:
   - name: default
     address: 127.0.0.1
     port: 8000
+
+varnish_extra_headers: True

@@ -1,4 +1,4 @@
-# Install software
+
 - name: Install software
   apt:
     name: git,vim,wget,curl,python-pycurl,acl

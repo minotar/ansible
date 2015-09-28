@@ -11,8 +11,8 @@
   file:
     path: "{{ item.value.root }}/logs"
     state: directory
-    group: www-data
-    owner: www-data
+    group: "{{ nginx_user }}"
+    owner: "{{ nginx_user }}"
     mode: 0770
     recurse: yes
   with_dict: projects
