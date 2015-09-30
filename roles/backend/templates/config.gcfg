@@ -14,7 +14,7 @@ ttl = {{ imgd_ttl }}
 [redis]
 # If you're using Redis caching, you should fill this section out.
 # Otherwise, don't worry about it
-address = {{ imgd_redis_address }}
+address = {{ imgd_redis_address }}:{{ imgd_redis_port }}
 # "auth" is optional, it can be left blank if you don't need authentication.
 auth = {{ imgd_redis_auth }}
 # We'll place this before skin caches in Redis to prevent conflicts.

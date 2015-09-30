@@ -183,30 +183,7 @@ sub vcl_hit {
 #   return (fetch);
 # }
 
-  # We have no fresh fish. Lets look at the stale ones.
-  if (std.healthy(req.backend_hint)) {
-    # Backend is healthy. Limit age to 10s.
-    if (obj.ttl + 10s > 0s) {
-{% if varnish_extra_headers %}
-      set req.http.grace = "normal(limited)";
-{% endif %}
-      return (deliver);
-    } else {
-      # No candidate for grace. Fetch a fresh object.
-      return(fetch);
-    }
-  } else {
-    # backend is sick - use full grace
-      if (obj.ttl + obj.grace > 0s) {
-{% if varnish_extra_headers %}
-      set req.http.grace = "full";
-{% endif %}
-      return (deliver);
-    } else {
-      # no graced object.
-      return (fetch);
-    }
-  }
+  call object_grace;
 
   # fetch & deliver once we get the result
   return (fetch); # Dead code, keep as a safeguard
@@ -234,7 +211,9 @@ sub vcl_backend_response {
 
   # We may as well introduce some basic caching of the stats
   if (bereq.url ~ "^/stats") {
-    set beresp.ttl = 10s;
+    set beresp.ttl = 5s;
+    # Disable grace
+    set beresp.grace = 0s;
     return (deliver);
   }
 
@@ -301,6 +280,33 @@ sub vcl_synth {
   }
 
   call header_cleanup;
+}
+
+# Called when the object is cached but past the ttl.
+sub object_grace {
+  if (std.healthy(req.backend_hint)) {
+    # Backend is healthy. Limit age to 10s.
+    if (obj.ttl + 10s > 0s) {
+{% if varnish_extra_headers %}
+      set req.http.grace = "SHORT";
+{% endif %}
+      return (deliver);
+    } else {
+      # No candidate for grace. Fetch a fresh object.
+      return(fetch);
+    }
+  } else {
+    # backend is sick - use full grace
+      if (obj.ttl + obj.grace > 0s) {
+{% if varnish_extra_headers %}
+      set req.http.grace = "FULL";
+{% endif %}
+      return (deliver);
+    } else {
+      # no graced object.
+      return (fetch);
+    }
+  }
 }
 
 # Setting custom req.url so the cache works

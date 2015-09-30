@@ -2,6 +2,7 @@
 - name: setup imgd servers
   hosts: minotar-backend
   sudo: yes
+  serial: 1
   vars_files:
     - group_vars/common
     - group_vars/backend

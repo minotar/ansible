@@ -1,5 +1,5 @@
 ---
 
 redis_save:
-  - \"\"
+  - ""
 redis_maxmemory_policy: volatile-ttl

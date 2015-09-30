@@ -20,3 +20,5 @@
     mode: 0644
   notify:
     - restart redis
+  tags:
+    - configuration

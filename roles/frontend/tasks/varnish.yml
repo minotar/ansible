@@ -30,6 +30,8 @@
     mode: 0644
   notify:
     - restart varnish
+  tags:
+    - configuration
 
 - name: Write Varnish VCL
   template:
@@ -40,3 +42,5 @@
     mode: 0644
   notify:
     - restart varnish
+  tags:
+    - configuration

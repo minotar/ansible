@@ -7,6 +7,7 @@ imgd_ttl: 7200
 imgd_cache: "memory"
 
 imgd_redis_address: ""
+imgd_redis_port: "6379"
 imgd_redis_auth: ""
 imgd_redis_prefix: "skins:"
 imgd_redis_pool: 25

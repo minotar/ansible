@@ -1,11 +1,26 @@
 ---
 
+imgd_port: 9999
+imgd_cache: "redis"
+imgd_redis_address: "104.131.190.189"
+
 linux_user_groups:
+  staff:
+    state: present
+    system: yes
   minotar:
     state: present
     system: no
 
 linux_users:
+  clone1018:
+    shell: /bin/bash
+    state: present
+    groups: staff
+  lukeh:
+    shell: /bin/bash
+    state: present
+    groups: staff
   minotar:
     shell: /bin/bash
     state: present

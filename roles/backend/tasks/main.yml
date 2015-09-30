@@ -30,6 +30,8 @@
     owner: root
     group: root
     mode: 0644
+  tags:
+    - configuration
 
 - name: Deploy imgd binary
   copy:
@@ -38,6 +40,8 @@
     owner: root
     group: minotar
     mode: 0750
+  tags:
+    - imgd
 
 - name: Copy imgd.conf
   template:
@@ -46,9 +50,14 @@
     owner: root
     group: minotar
     mode: 0750
+  tags:
+    - imgd
+    - configuration
 
 - name: Start and enable imgd
   service:
     name: imgd
     enabled: yes
-    state: started
+    state: restarted
+  tags:
+    - imgd

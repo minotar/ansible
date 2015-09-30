@@ -6,6 +6,8 @@
     accept_hostkey: yes
   with_dict: projects
   when: item.value.checkout is defined
+  tags:
+    - site
 
 - name: Fix permissions on directory
   file:
@@ -18,3 +20,5 @@
   with_dict: projects
   notify:
     - restart nginx
+  tags:
+    - site
