@@ -1,3 +1,4 @@
+---
 
 - include: nginx.yml
 - include: varnish.yml
@@ -15,7 +16,7 @@
     name: /srv/www
     entity: staff
     etype: group
-    permissions: "rwx"
+    permissions: rwx
     default: yes
     state: present
 
@@ -24,26 +25,7 @@
     name: /srv/www
     entity: staff
     etype: group
-    permissions: "rwx"
+    permissions: rwx
     state: present
-
-## Are these needed?
-
-#- name: set default web acls
-#  acl:
-#    name: /srv/www
-#    entity: nginx
-#    etype: group
-#    permissions: "rwx"
-#    default: yes
-#    state: present
-
-#- name: set web acls
-#  acl:
-#    name: /srv/www
-#    entity: nginx
-#    etype: group
-#    permissions: "rwx"
-#    state: present
 
 - include: projects.yml

@@ -1,8 +1,14 @@
 ---
 
+imgd_bind: "{{ ansible_eth1.ipv4.address }}"
+# Don't forget to set in frontend group_vars if changed
 imgd_port: 9999
-imgd_cache: "redis"
-imgd_redis_address: "104.131.190.189"
+imgd_cache: redis
+
+# Redis is on the (first) host in the minotar-cache group. Grab it's eth1 IP and use that.
+imgd_redis_address: "{{ hostvars[groups['minotar-cache'][0]]['ansible_eth1']['ipv4']['address'] }}"
+# Get variable from redis_password.yml
+imgd_redis_auth: "{{ include_redis_password }}"
 
 linux_user_groups:
   staff:

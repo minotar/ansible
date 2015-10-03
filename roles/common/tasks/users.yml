@@ -1,3 +1,4 @@
+---
 
 - name: Add users from group_vars file
   user:
@@ -10,6 +11,8 @@
     groups: "{{ item.value.groups }}"
   with_dict: linux_users
   sudo: yes
+  tags:
+    - users
 
 - name: Add SSH keys from group_vars file
   authorized_key:
@@ -18,3 +21,5 @@
     state: present
   with_dict: authorized_ssh_keys
   sudo: yes
+  tags:
+    - users

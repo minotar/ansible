@@ -1,3 +1,5 @@
+---
+
 - name: Add Varnish apt key.
   apt_key:
     data: "{{ lookup('file', 'varnish.gpg') }}"

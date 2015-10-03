@@ -1,5 +1,12 @@
+---
 
-- name: setup varnish servers
+- hosts: minotar-backend
+  name: Gather facts from minotar-backend
+  tasks: [ ]
+  tags:
+    - configuration
+
+- name: Setup Minotar Frontend Site and Accelerator
   hosts: minotar-frontend
   sudo: yes
   vars_files:

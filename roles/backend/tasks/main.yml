@@ -1,3 +1,4 @@
+---
 
 - name: Copy common-session
   template:

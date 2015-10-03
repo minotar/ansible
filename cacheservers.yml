@@ -1,8 +1,10 @@
+---
 
 - name: Setup Minotar Cache
   hosts: minotar-cache
   sudo: yes
   vars_files:
+    - redis_password.yml
     - group_vars/common
     - group_vars/cache
 

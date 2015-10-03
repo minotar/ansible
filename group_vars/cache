@@ -1,5 +1,9 @@
 ---
 
+# Get variable from redis_password.yml
+redis_password: "{{ include_redis_password }}"
+
+redis_bind: "{{ ansible_eth1.ipv4.address }}"
 redis_save:
   - ""
 redis_maxmemory_policy: volatile-ttl

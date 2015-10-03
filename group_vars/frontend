@@ -14,11 +14,7 @@ projects:
             repo: https://github.com/minotar/minotar.net.git
             dest: /srv/www/minotar.net/public_html
 
+backend_imgd_port: 9999
 
-varnish_storage_type: "malloc"
-varnish_storage_size: "3G"
-
-varnish_backends:
-  - name: imgd1
-    address: 104.131.107.225
-    port: 9999
+varnish_storage_type: malloc
+varnish_storage_size: 3G

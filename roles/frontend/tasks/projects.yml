@@ -1,4 +1,5 @@
 ---
+
 - name: Checkout git repos
   git:
     repo: "{{ item.value.checkout.repo }}"

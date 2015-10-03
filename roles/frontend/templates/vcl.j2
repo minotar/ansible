@@ -23,10 +23,10 @@ backend frontendWebsite {
 }
 
 # Should possibly consider adding a backend health check page (vs. /version) that ensures things are okay with Redis?
-{% for backend in varnish_backends %}
-backend {{ backend.name }} {
-  .host = "{{ backend.address }}";
-  .port = "{{ backend.port }}";
+{% for backend in groups['minotar-backend'] %}
+backend {{ hostvars[backend]['ansible_hostname'] }} {
+  .host = "{{ hostvars[backend]['ansible_eth1']['ipv4']['address'] }}";
+  .port = "{{ backend_imgd_port }}";
 
   .connect_timeout = 4s;
   .first_byte_timeout = 10s;
@@ -55,8 +55,8 @@ sub vcl_init {
   # Typically used to initialize VMODs.
 
   new vdir = directors.round_robin();
-  {% for backend in varnish_backends %}
-  vdir.add_backend({{ backend.name }});
+  {% for backend in groups['minotar-backend'] %}
+  vdir.add_backend({{ hostvars[backend]['ansible_hostname'] }});
   {% endfor %}
 }
 
@@ -315,10 +315,10 @@ sub backend_stats {
       set req.backend_hint = frontendWebsite;
       set req.url = "/stats?nginx";
     }
-    {% for backend in varnish_backends %}
-    if (req.url == "/stats/{{ backend.name }}") {
-      set req.backend_hint = {{ backend.name }};
-      set req.url = "/stats?{{ backend.name }}";
+    {% for backend in groups['minotar-backend'] %}
+    if (req.url == "/stats/{{ hostvars[backend]['ansible_hostname'] }}") {
+      set req.backend_hint = {{ hostvars[backend]['ansible_hostname'] }};
+      set req.url = "/stats?{{ hostvars[backend]['ansible_hostname'] }}";
     }
     {% endfor %}
 

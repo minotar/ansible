@@ -1,3 +1,4 @@
+---
 
 - name: Add groups from group_vars file
   group:

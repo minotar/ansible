@@ -4,23 +4,34 @@ This represents a fair idea of how the Minotar deployment of imgd should be. We 
 
 ## Configuration
 
-Check group_vars and production file etc...
+Check group_vars and production file. Create a `redis_password.yml` file as below
+
+````
+---
+
+include_redis_password: **some_long_password**
+````
 
 Add imgd binary to `roles/backend/files/imgd`
 
 Full deploy:
-`ansible-playbook -i production frontendservers.yml`
+
+`ansible-playbook --skip-tags users -i production site.yml`
 
 Deploy Cache:
-`ansible-playbook -i production cacheservers.yml`
+
+`ansible-playbook --skip-tags users -i production cacheservers.yml`
 
 Redeploy Varnish and Nginx configurations:
+
 `ansible-playbook -i production frontendservers.yml -t configuration`
 
 Redeploy Website:
+
 `ansible-playbook -i production frontendservers.yml -t site`
 
 Redeploy imgd (binary & config):
+
 `ansible-playbook -i production backendservers.yml -t imgd`
 
 ## Varnish Breakdown
