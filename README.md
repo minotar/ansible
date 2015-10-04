@@ -66,6 +66,25 @@ Hashing is based upon Request URL and Host/IP. It could almost certainly be just
 
 We will attempt to cache resources without a header set for a generic 2 mins. Will also keep in the cache for a 6 hour grace period which allows the serving of resources even when the backend goes down.
 
+## Caching
+
+* Static site:
+  * Use Nginx for cache busting in the assets subfolder. Idea being that we can use a different URL to force a client cache refresh.
+  * Cache `/favicon.ico` for 8 days. This will be the same file as `/assets/minotar.ico`.
+  * Add `<link rel="shortcut icon" href="/assets/minotar.1.ico" />` to HTML. Increment if favicon is ever updated.
+  * Cache everything uder `/assets/*` for 1 year with required name change on update (eg. style.1.css)
+  * Cache HTML homepage for 5 mins. This may as well be something, but all we don't want too long as page updates rely on it refreshing.
+  * Cache robots.txt for 24 hours
+* At `imgd` we cache all Mojang responses for 7200 seconds (2 hours) in Redis with auto-expiration of keys.
+* Varnish:
+  * Cache everything for 7200 seconds (whatever the header from backend is).
+  * Will keep all resources for an extra 6 hours for use if the backend is unavailable.
+* CloudFlare:
+  * Will then respect given headers and consequently cache at the edge for 7200 seconds
+  * They will respond to every request with a Cache-Control header with 7200 seconds and an Expires header for that much in the future.
+
+With caching rules we (Pro plan?) can tell CloudFlare to only cache at the edge for 3600 seconds (1 hour) instead.
+
 ## Other Stuff
 
 Less special and needs some text here

@@ -114,6 +114,36 @@ http {
 
         index index.html;
 
+        # Cache homepage for 5 mins, better than nothing, but still don't want to wait too long for page updates.
+        location = /index.html {
+            expires 5m;
+            add_header Cache-Control "public";
+        }
+
+        # Cache robots file for 1 day
+        location = /robots.txt {
+            expires 1d;
+            add_header Cache-Control "public";
+        }
+
+        # This should only be used by browsers which check in the root of the domain.
+        # Ideally we should use the favicon on the assets subfolder
+        location /favicon.ico {
+            expires 8d;
+            add_header Cache-Control "public";
+        }
+
+        # Everything in the assets folder should have a long cache set
+        location /assets/ {
+            expires 1y;
+            add_header Cache-Control "public";
+        }
+
+        # Allow cache busting for the assets subfolder
+        location ~* /assets/(.+)\.(?:\d+)\.(js|css|png|jpg|jpeg|gif|ico)$ {
+            try_files $uri /assets/$1.$2;
+        }
+
         location /stats {
             stub_status on;
             access_log   off;
