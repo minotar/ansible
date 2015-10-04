@@ -55,9 +55,9 @@ sub vcl_init {
   # Typically used to initialize VMODs.
 
   new vdir = directors.round_robin();
-  {% for backend in groups['minotar-backend'] %}
+{% for backend in groups['minotar-backend'] %}
   vdir.add_backend({{ hostvars[backend]['ansible_hostname'] }});
-  {% endfor %}
+{% endfor %}
 }
 
 sub vcl_recv {
@@ -207,6 +207,11 @@ sub vcl_backend_response {
 {% if varnish_extra_headers %}
   # Return backend name with each request
   set beresp.http.X-Backend = beresp.backend.name;
+
+  # How many attempts it took to get the resource
+  if (bereq.retries > 0) {
+    set beresp.http.X-Attempts = bereq.retries + 1;
+  }
 {% endif %}
 
   # We may as well introduce some basic caching of the stats
@@ -229,6 +234,38 @@ sub vcl_backend_response {
   # make Varnish keep all objects for 6 hours beyond their TTL
   set beresp.grace = 6h;
 
+  return (deliver);
+}
+
+# If things go wrong on request to the backend
+sub vcl_backend_error {
+{% if varnish_extra_headers %}
+  set beresp.http.X-Attempts = bereq.retries + 1;
+{% endif %}
+
+  if (beresp.status == 503 && bereq.retries < 4) {
+    return (retry);
+  }
+
+
+  # At this point we have tried 5 times to hit the backend and sill failed :(
+  set beresp.http.Content-Type = "text/html; charset=utf-8";
+  set beresp.http.Retry-After = "5";
+  synthetic( {"<!DOCTYPE html>
+<html>
+  <head>
+    <title>"} + beresp.status + " " + beresp.reason + {"</title>
+  </head>
+  <body>
+    <h1>Error "} + beresp.status + " " + beresp.reason + {"</h1>
+    <p>"} + beresp.reason + {"</p>
+    <h3>Guru Meditation:</h3>
+    <p>XID: "} + bereq.xid + {"</p>
+    <hr>
+    <p>Varnish cache server</p>
+  </body>
+</html>
+"} );
   return (deliver);
 }
 
@@ -256,6 +293,8 @@ sub vcl_deliver {
 
   call header_cleanup;
 }
+
+# Misc subroutines...
 
 sub vcl_purge {
   # Only handle actual PURGE HTTP methods, everything else is discarded
@@ -315,12 +354,12 @@ sub backend_stats {
       set req.backend_hint = frontendWebsite;
       set req.url = "/stats?nginx";
     }
-    {% for backend in groups['minotar-backend'] %}
+{% for backend in groups['minotar-backend'] %}
     if (req.url == "/stats/{{ hostvars[backend]['ansible_hostname'] }}") {
       set req.backend_hint = {{ hostvars[backend]['ansible_hostname'] }};
       set req.url = "/stats?{{ hostvars[backend]['ansible_hostname'] }}";
     }
-    {% endfor %}
+{% endfor %}
 
   return (hash);
 }
