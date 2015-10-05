@@ -34,6 +34,10 @@ Redeploy imgd (binary & config):
 
 `ansible-playbook -i production backendservers.yml -t imgd`
 
+Building new imgd server:
+
+`ansible-playbook -i production -l redis1.minotar.net,imgdN.minotar.net backendservers.yml`
+
 ## Varnish Breakdown
 
 Varnish is configured with at least 2 backends.
@@ -44,7 +48,7 @@ We direct specific requests for certain web resources to the Nginx backend and a
 
 Idea behind the round robin is that we logically want a fairly even distributuion of requests from each of the IPs.
 
-The web resources which will go through to Varnish are as follows:
+The web resources which will go through to Nginx are as follows:
 * /
 * /favicon.ico
 * /robots.txt
@@ -72,8 +76,7 @@ If a backend fails (currently just for conenction), the request will retry up to
 
 * Static site:
   * Use Nginx for cache busting in the assets subfolder. Idea being that we can use a different URL to force a client cache refresh.
-  * Cache `/favicon.ico` for 8 days. This will be the same file as `/assets/minotar.ico`.
-  * Add `<link rel="shortcut icon" href="/assets/minotar.1.ico" />` to HTML. Increment if favicon is ever updated.
+  * Cache `/favicon.ico` for 8 days. This will only be used when the "shortcut icon" is ignored.
   * Cache everything uder `/assets/*` for 1 year with required name change on update (eg. style.1.css)
   * Cache HTML homepage for 5 mins. This may as well be something, but all we don't want too long as page updates rely on it refreshing.
   * Cache robots.txt for 24 hours

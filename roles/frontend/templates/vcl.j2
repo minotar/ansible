@@ -14,7 +14,6 @@ backend frontendWebsite {
 
   .probe = {
     .url = "/";
-
     .interval = 5s;
     .timeout = 1s;
     .window = 5;
@@ -29,7 +28,7 @@ backend {{ hostvars[backend]['ansible_hostname'] }} {
   .port = "{{ backend_imgd_port }}";
 
   .connect_timeout = 4s;
-  .first_byte_timeout = 10s;
+  .first_byte_timeout = 4s;
   .between_bytes_timeout = 2s;
 
   .probe = {
@@ -217,6 +216,7 @@ sub vcl_backend_response {
   # We may as well introduce some basic caching of the stats
   if (bereq.url ~ "^/stats") {
     set beresp.ttl = 5s;
+    set beresp.http.Cache-Contol = "Cache-Control: public, max-age=5";
     # Disable grace
     set beresp.grace = 0s;
     return (deliver);

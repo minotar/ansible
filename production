@@ -9,6 +9,7 @@ varnish1.minotar.net
 #==========#
 [minotar-backend]
 imgd1.minotar.net
+imgd2.minotar.net
 
 #=======#
 # Cache #
