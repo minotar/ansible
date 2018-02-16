@@ -1,7 +1,9 @@
 ---
 
-- hosts: minotar-backend
-  name: Gather facts from minotar-backend
+- name: Gather facts from minotar-backend and minotar-cache
+  hosts:
+    - minotar-cache
+    - minotar-backend
   tasks: [ ]
   tags:
     - configuration

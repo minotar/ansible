@@ -44,7 +44,7 @@
   tags:
     - imgd
 
-- name: Copy imgd.conf
+- name: Create config.gcfg
   template:
     src: config.gcfg
     dest: /srv/minotar/config.gcfg

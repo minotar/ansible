@@ -3,11 +3,14 @@
 imgd_bind: 0.0.0.0
 imgd_port: 8000
 
-imgd_ttl: 7200
 imgd_cache: memory
+imgd_logging: NOTICE
+imgd_url: https://minotar.net/
+imgd_ttl: 7200
 
 imgd_redis_address: ""
 imgd_redis_port: 6379
 imgd_redis_auth: ""
+imgd_redis_db: 0
 imgd_redis_prefix: "skins:"
 imgd_redis_pool: 25

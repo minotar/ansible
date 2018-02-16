@@ -1,7 +1,8 @@
 ---
 
-- hosts: minotar-cache
-  name: Gather facts from minotar-cache
+- name: Gather facts from minotar-cache
+  hosts:
+    - minotar-cache
   tasks: [ ]
   tags:
     - imgd
@@ -10,7 +11,7 @@
 - name: Setup Minotar imgd Backend
   hosts: minotar-backend
   sudo: yes
-  serial: 1
+  serial: 10
   vars_files:
     - redis_password.yml
     - group_vars/common

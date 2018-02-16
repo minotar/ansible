@@ -1,7 +1,8 @@
 ---
 
 - name: Setup Minotar Cache
-  hosts: minotar-cache
+  hosts:
+    - minotar-cache
   sudo: yes
   vars_files:
     - redis_password.yml
