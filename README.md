@@ -1,8 +1,14 @@
-# Minotar Stack Deployment
+# ARCHIVED
+
+_As of September 2021, this infra was transitioned to a Kubernetes stack (+ single monitoring server). See [minotar/infra](https://github.com/minotar/infra)_
+
+What follows is legacy documentation:
+
+## Minotar Stack Deployment
 
 This represents a fair idea of how the Minotar deployment of imgd should be. We use a combination of caching the Mojang API responses in Redis and caching the processed resource in Varnish.
 
-## Configuration
+### Configuration
 
 Check group_vars and production file. Create a `redis_password.yml` file as below
 
@@ -38,7 +44,7 @@ Building new imgd server:
 
 `ansible-playbook -i production -l redis1.minotar.net,imgdN.minotar.net backendservers.yml`
 
-## Varnish Breakdown
+### Varnish Breakdown
 
 Varnish is configured with at least 2 backends.
  * Nginx Website
@@ -72,7 +78,7 @@ We will attempt to cache resources without a header set for a generic 2 mins. Wi
 
 If a backend fails (currently just for conenction), the request will retry up to another 4 times before a "Guru Meditation" is generated.
 
-## Caching
+### Caching
 
 * Static site:
   * Use Nginx for cache busting in the assets subfolder. Idea being that we can use a different URL to force a client cache refresh.
@@ -89,7 +95,3 @@ If a backend fails (currently just for conenction), the request will retry up to
   * They will respond to every request with a Cache-Control header with 7200 seconds and an Expires header for that much in the future.
 
 With the CloudFlare Pro Plan it's possible to tell them to only cache at the edge for 3600 seconds (1 hour) instead.
-
-## Other Stuff
-
-Less special and needs some text here
